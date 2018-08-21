@@ -30,11 +30,7 @@ import org.whispersystems.textsecuregcm.auth.InvalidAuthorizationHeaderException
 import org.whispersystems.textsecuregcm.auth.StoredVerificationCode;
 import org.whispersystems.textsecuregcm.auth.TurnToken;
 import org.whispersystems.textsecuregcm.auth.TurnTokenGenerator;
-import org.whispersystems.textsecuregcm.entities.AccountAttributes;
-import org.whispersystems.textsecuregcm.entities.ApnRegistrationId;
-import org.whispersystems.textsecuregcm.entities.GcmRegistrationId;
-import org.whispersystems.textsecuregcm.entities.RegistrationLock;
-import org.whispersystems.textsecuregcm.entities.RegistrationLockFailure;
+import org.whispersystems.textsecuregcm.entities.*;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.sms.SmsSender;
 import org.whispersystems.textsecuregcm.sms.TwilioSmsSender;
@@ -104,6 +100,7 @@ public class AccountController {
 
   @Timed
   @GET
+  @Produces(MediaType.APPLICATION_JSON)
   @Path("/{transport}/code/{number}")
   public Response createAccount(@PathParam("transport") String transport,
                                 @PathParam("number")    String number,
@@ -137,11 +134,12 @@ public class AccountController {
       // noop
     } else if (transport.equals("sms")) {
       smsSender.deliverSmsVerification(number, client, verificationCode.getVerificationCodeDisplay());
-    } else if (transport.equals("voice")) {
+    } else {
       smsSender.deliverVoxVerification(number, verificationCode.getVerificationCodeSpeech());
     }
 
-    return Response.ok().build();
+    CreateAccountResponse response = new CreateAccountResponse(200, "sms code have been sent");
+    return Response.ok(response).build();
   }
 
   @Timed
