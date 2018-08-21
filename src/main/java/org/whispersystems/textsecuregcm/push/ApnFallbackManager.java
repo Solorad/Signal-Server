@@ -44,7 +44,6 @@ public class ApnFallbackManager implements Managed, Runnable {
     metricRegistry.register(name(ApnFallbackManager.class, "voip_ratio"), new VoipRatioGauge(delivered, sent));
   }
 
-  private final APNSender       apnSender;
   private final AccountsManager accountsManager;
 
   private final ReplicatedJedisPool jedisPool;
@@ -57,11 +56,9 @@ public class ApnFallbackManager implements Managed, Runnable {
   private boolean finished;
 
   public ApnFallbackManager(ReplicatedJedisPool jedisPool,
-                            APNSender apnSender,
                             AccountsManager accountsManager)
-      throws IOException
+          throws IOException
   {
-    this.apnSender       = apnSender;
     this.accountsManager = accountsManager;
     this.jedisPool       = jedisPool;
     this.insertOperation = new InsertOperation(jedisPool);
@@ -148,7 +145,7 @@ public class ApnFallbackManager implements Managed, Runnable {
             continue;
           }
 
-          apnSender.sendMessage(new ApnMessage(apnId, separated.get().first(), separated.get().second(), true));
+//          apnSender.sendMessage(new ApnMessage(apnId, separated.get().first(), separated.get().second(), true));
           retry.mark();
         }
 

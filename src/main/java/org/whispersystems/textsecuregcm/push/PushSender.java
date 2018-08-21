@@ -39,31 +39,29 @@ public class PushSender implements Managed {
   @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(PushSender.class);
 
-  private final ApnFallbackManager         apnFallbackManager;
+  //  private final ApnFallbackManager         apnFallbackManager;
   private final GCMSender                  gcmSender;
-  private final APNSender                  apnSender;
+  //  private final APNSender                  apnSender;
   private final WebsocketSender            webSocketSender;
   private final BlockingThreadPoolExecutor executor;
   private final int                        queueSize;
 
-  public PushSender(ApnFallbackManager apnFallbackManager,
-                    GCMSender gcmSender, APNSender apnSender,
-                    WebsocketSender websocketSender, int queueSize)
+  public PushSender(
+          GCMSender gcmSender,
+          WebsocketSender websocketSender, int queueSize)
   {
-    this.apnFallbackManager = apnFallbackManager;
     this.gcmSender          = gcmSender;
-    this.apnSender          = apnSender;
     this.webSocketSender    = websocketSender;
     this.queueSize          = queueSize;
     this.executor           = new BlockingThreadPoolExecutor(50, queueSize);
 
     SharedMetricRegistries.getOrCreate(Constants.METRICS_NAME)
-                          .register(name(PushSender.class, "send_queue_depth"),
-                                    (Gauge<Integer>) executor::getSize);
+            .register(name(PushSender.class, "send_queue_depth"),
+                      (Gauge<Integer>) executor::getSize);
   }
 
   public void sendMessage(final Account account, final Device device, final Envelope message)
-      throws NotPushRegisteredException
+          throws NotPushRegisteredException
   {
     if (device.getGcmId() == null && device.getApnId() == null && !device.getFetchesMessages()) {
       throw new NotPushRegisteredException("No delivery possible!");
@@ -77,7 +75,7 @@ public class PushSender implements Managed {
   }
 
   public void sendQueuedNotification(Account account, Device device)
-      throws NotPushRegisteredException
+          throws NotPushRegisteredException
   {
     if      (device.getGcmId() != null)    sendGcmNotification(account, device);
     else if (device.getApnId() != null)    sendApnNotification(account, device, true);
@@ -119,20 +117,20 @@ public class PushSender implements Managed {
   }
 
   private void sendApnNotification(Account account, Device device, boolean newOnly) {
-    ApnMessage apnMessage;
-
-    if (newOnly && RedisOperation.unchecked(() -> apnFallbackManager.isScheduled(account, device))) {
-      return;
-    }
-
-    if (!Util.isEmpty(device.getVoipApnId())) {
-      apnMessage = new ApnMessage(device.getVoipApnId(), account.getNumber(), device.getId(), true);
-      RedisOperation.unchecked(() -> apnFallbackManager.schedule(account, device));
-    } else {
-      apnMessage = new ApnMessage(device.getApnId(), account.getNumber(), device.getId(), false);
-    }
-
-    apnSender.sendMessage(apnMessage);
+//    ApnMessage apnMessage;
+//
+//    if (newOnly && RedisOperation.unchecked(() -> apnFallbackManager.isScheduled(account, device))) {
+//      return;
+//    }
+//
+//    if (!Util.isEmpty(device.getVoipApnId())) {
+//      apnMessage = new ApnMessage(device.getVoipApnId(), account.getNumber(), device.getId(), true);
+//      RedisOperation.unchecked(() -> apnFallbackManager.schedule(account, device));
+//    } else {
+//      apnMessage = new ApnMessage(device.getApnId(), account.getNumber(), device.getId(), false);
+//    }
+//
+//    apnSender.sendMessage(apnMessage);
   }
 
   private void sendWebSocketMessage(Account account, Device device, Envelope outgoingMessage)
@@ -142,7 +140,7 @@ public class PushSender implements Managed {
 
   @Override
   public void start() throws Exception {
-    apnSender.start();
+//    apnSender.start();
     gcmSender.start();
   }
 
@@ -151,7 +149,7 @@ public class PushSender implements Managed {
     executor.shutdown();
     executor.awaitTermination(5, TimeUnit.MINUTES);
 
-    apnSender.stop();
+//    apnSender.stop();
     gcmSender.stop();
   }
 

@@ -141,7 +141,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
 
   @Override
   public void run(WhisperServerConfiguration config, Environment environment)
-      throws Exception
+          throws Exception
   {
     SharedMetricRegistries.add(Constants.METRICS_NAME, environment.metrics());
     environment.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -178,24 +178,25 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     DeadLetterHandler          deadLetterHandler          = new DeadLetterHandler(messagesManager);
     DispatchManager            dispatchManager            = new DispatchManager(cacheClientFactory, Optional.of(deadLetterHandler));
     PubSubManager              pubSubManager              = new PubSubManager(cacheClient, dispatchManager);
-    APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
+//    APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
+    APNSender                  apnSender = null;
     GCMSender                  gcmSender                  = new GCMSender(accountsManager, config.getGcmConfiguration().getApiKey());
     WebsocketSender            websocketSender            = new WebsocketSender(messagesManager, pubSubManager);
     AccountAuthenticator       deviceAuthenticator        = new AccountAuthenticator(accountsManager                 );
     FederatedPeerAuthenticator federatedPeerAuthenticator = new FederatedPeerAuthenticator(config.getFederationConfiguration());
     RateLimiters               rateLimiters               = new RateLimiters(config.getLimitsConfiguration(), cacheClient);
 
-    ApnFallbackManager       apnFallbackManager  = new ApnFallbackManager(pushSchedulerClient, apnSender, accountsManager);
+    ApnFallbackManager       apnFallbackManager  = new ApnFallbackManager(pushSchedulerClient, accountsManager);
     TwilioSmsSender          twilioSmsSender     = new TwilioSmsSender(config.getTwilioConfiguration());
     SmsSender                smsSender           = new SmsSender(twilioSmsSender);
     UrlSigner                urlSigner           = new UrlSigner(config.getAttachmentsConfiguration());
-    PushSender               pushSender          = new PushSender(apnFallbackManager, gcmSender, apnSender, websocketSender, config.getPushConfiguration().getQueueSize());
+    PushSender               pushSender          = new PushSender(gcmSender, websocketSender, config.getPushConfiguration().getQueueSize());
     ReceiptSender            receiptSender       = new ReceiptSender(accountsManager, pushSender, federatedClientManager);
     TurnTokenGenerator       turnTokenGenerator  = new TurnTokenGenerator(config.getTurnConfiguration());
 
     messagesCache.setPubSubManager(pubSubManager, pushSender);
 
-    apnSender.setApnFallbackManager(apnFallbackManager);
+//    apnSender.setApnFallbackManager(apnFallbackManager);
     environment.lifecycle().manage(apnFallbackManager);
     environment.lifecycle().manage(pubSubManager);
     environment.lifecycle().manage(pushSender);
@@ -207,13 +208,13 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     ProfileController    profileController    = new ProfileController(rateLimiters , accountsManager, config.getProfilesConfiguration());
 
     environment.jersey().register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<Account>()
-                                                             .setAuthenticator(deviceAuthenticator)
-                                                             .setPrincipal(Account.class)
-                                                             .buildAuthFilter(),
+                                                                 .setAuthenticator(deviceAuthenticator)
+                                                                 .setPrincipal(Account.class)
+                                                                 .buildAuthFilter(),
                                                          new BasicCredentialAuthFilter.Builder<FederatedPeer>()
-                                                             .setAuthenticator(federatedPeerAuthenticator)
-                                                             .setPrincipal(FederatedPeer.class)
-                                                             .buildAuthFilter()));
+                                                                 .setAuthenticator(federatedPeerAuthenticator)
+                                                                 .setPrincipal(FederatedPeer.class)
+                                                                 .buildAuthFilter()));
     environment.jersey().register(new AuthValueFactoryProvider.Binder());
 
     environment.jersey().register(new AccountController(pendingAccountsManager, accountsManager, rateLimiters, smsSender, messagesManager, turnTokenGenerator, config.getTestDevices()));
@@ -227,7 +228,6 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     environment.jersey().register(messageController);
     environment.jersey().register(profileController);
 
-    ///
     WebSocketEnvironment webSocketEnvironment = new WebSocketEnvironment(environment, config.getWebSocketConfiguration(), 90000);
     webSocketEnvironment.setAuthenticator(new WebSocketAccountAuthenticator(deviceAuthenticator));
     webSocketEnvironment.setConnectListener(new AuthenticatedConnectListener(pushSender, receiptSender, messagesManager, pubSubManager, apnFallbackManager));
