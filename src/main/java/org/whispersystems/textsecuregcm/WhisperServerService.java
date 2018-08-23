@@ -18,6 +18,7 @@ package org.whispersystems.textsecuregcm;
 
 import com.codahale.metrics.SharedMetricRegistries;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.base.Optional;
@@ -223,6 +224,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     environment.jersey().register(new FederationControllerV1(accountsManager, attachmentController, messageController));
     environment.jersey().register(new FederationControllerV2(accountsManager, attachmentController, messageController, keysController));
     environment.jersey().register(new ProvisioningController(rateLimiters, pushSender));
+    environment.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     environment.jersey().register(attachmentController);
     environment.jersey().register(keysController);
     environment.jersey().register(messageController);

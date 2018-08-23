@@ -22,6 +22,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.auth.AuthenticationCredentials;
@@ -66,7 +67,9 @@ import java.util.concurrent.TimeUnit;
 import static com.codahale.metrics.MetricRegistry.name;
 import io.dropwizard.auth.Auth;
 
+@Api(value = "/v1/accounts", description = "Operations about accounts")
 @Path("/v1/accounts")
+@Produces(MediaType.APPLICATION_JSON)
 public class AccountController {
 
   private final Logger         logger         = LoggerFactory.getLogger(AccountController.class);
@@ -100,6 +103,11 @@ public class AccountController {
 
   @Timed
   @GET
+  @ApiOperation(
+          value = "Create account",
+          notes = "Create account using instruction",
+          response = CreateAccountResponse.class)
+  @ApiResponses(value = {@ApiResponse(code = 403, message = "Not authorized") })
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{transport}/code/{number}")
   public Response createAccount(@PathParam("transport") String transport,
@@ -146,6 +154,8 @@ public class AccountController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Verify account")
+  @ApiResponses(value = {@ApiResponse(code = 403, message = "Not authorized") })
   @Path("/code/{verification_code}")
   public void verifyAccount(@PathParam("verification_code") String verificationCode,
                             @HeaderParam("Authorization")   String authorizationHeader,
