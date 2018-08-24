@@ -126,7 +126,7 @@ public class AccountController {
       smsSender.deliverVoxVerification(number, verificationCode.getVerificationCodeSpeech());
     }
 
-    CreateAccountResponse response = new CreateAccountResponse(200, "sms code have been sent");
+    AccountResponse response = new AccountResponse(200, "sms code have been sent");
     return Response.ok(response).build();
   }
 
@@ -139,7 +139,7 @@ public class AccountController {
           @ApiResponse(code=400, message="Invalid ID"),
   })
   @Path("/code/{verification_code}")
-  public void verifyAccount(@PathParam("verification_code") String verificationCode,
+  public Response verifyAccount(@PathParam("verification_code") String verificationCode,
                             @HeaderParam("Authorization")   String authorizationHeader,
                             @HeaderParam("X-Signal-Agent")  String userAgent,
                             @Valid                          AccountAttributes accountAttributes)
@@ -186,6 +186,8 @@ public class AccountController {
       }
 
       createAccount(number, password, userAgent, accountAttributes);
+      AccountResponse response = new AccountResponse(200, "user was successfully verified");
+      return Response.ok(response).build();
     } catch (InvalidAuthorizationHeaderException e) {
       logger.info("Bad Authorization Header", e);
       throw new WebApplicationException(Response.status(401).build());
