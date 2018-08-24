@@ -59,7 +59,7 @@ public class AttachmentControllerTest {
 
     assertThat(descriptor.getLocation()).startsWith("https://attachment-bucket.s3-accelerate.amazonaws.com");
     assertThat(descriptor.getId()).isGreaterThan(0);
-    assertThat(descriptor.getIdString()).isNotBlank();
+    assertThat(descriptor.getIdString()).isNotEmpty();
   }
 
   @Test
@@ -72,7 +72,7 @@ public class AttachmentControllerTest {
 
     assertThat(descriptor.getLocation()).startsWith("https://s3.amazonaws.com");
     assertThat(descriptor.getId()).isGreaterThan(0);
-    assertThat(descriptor.getIdString()).isNotBlank();
+    assertThat(descriptor.getIdString()).isNotEmpty();
   }
 
   @Test

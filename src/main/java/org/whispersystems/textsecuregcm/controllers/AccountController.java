@@ -22,40 +22,22 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.auth.AuthenticationCredentials;
-import org.whispersystems.textsecuregcm.auth.AuthorizationHeader;
-import org.whispersystems.textsecuregcm.auth.InvalidAuthorizationHeaderException;
-import org.whispersystems.textsecuregcm.auth.StoredVerificationCode;
-import org.whispersystems.textsecuregcm.auth.TurnToken;
-import org.whispersystems.textsecuregcm.auth.TurnTokenGenerator;
+import org.whispersystems.textsecuregcm.auth.*;
 import org.whispersystems.textsecuregcm.entities.*;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.sms.SmsSender;
 import org.whispersystems.textsecuregcm.sms.TwilioSmsSender;
-import org.whispersystems.textsecuregcm.storage.Account;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.Device;
-import org.whispersystems.textsecuregcm.storage.MessagesManager;
-import org.whispersystems.textsecuregcm.storage.PendingAccountsManager;
+import org.whispersystems.textsecuregcm.storage.*;
 import org.whispersystems.textsecuregcm.util.Constants;
 import org.whispersystems.textsecuregcm.util.Util;
 import org.whispersystems.textsecuregcm.util.VerificationCode;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -65,11 +47,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import io.dropwizard.auth.Auth;
 
-@Api(value = "/v1/accounts", description = "Operations about accounts")
 @Path("/v1/accounts")
 @Produces(MediaType.APPLICATION_JSON)
+@Api(value="/v1/accounts", description="Operations on the accounts")
 public class AccountController {
 
   private final Logger         logger         = LoggerFactory.getLogger(AccountController.class);
@@ -103,13 +84,12 @@ public class AccountController {
 
   @Timed
   @GET
-  @ApiOperation(
-          value = "Create account",
-          notes = "Create account using instruction",
-          response = CreateAccountResponse.class)
-  @ApiResponses(value = {@ApiResponse(code = 403, message = "Not authorized") })
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{transport}/code/{number}")
+  @ApiOperation(value="Create account", notes="User number which will be used via twilio is needed")
+  @ApiResponses(value={
+          @ApiResponse(code=400, message="Invalid ID"),
+  })
   public Response createAccount(@PathParam("transport") String transport,
                                 @PathParam("number")    String number,
                                 @QueryParam("client")   Optional<String> client)
@@ -154,8 +134,10 @@ public class AccountController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(value = "Verify account")
-  @ApiResponses(value = {@ApiResponse(code = 403, message = "Not authorized") })
+  @ApiOperation(value="Verify account", notes="Verification of account. Please check page https://github.com/signalapp/Signal-Server/wiki/API-Protocol for details about account attributes")
+  @ApiResponses(value={
+          @ApiResponse(code=400, message="Invalid ID"),
+  })
   @Path("/code/{verification_code}")
   public void verifyAccount(@PathParam("verification_code") String verificationCode,
                             @HeaderParam("Authorization")   String authorizationHeader,
