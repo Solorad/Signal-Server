@@ -18,7 +18,6 @@ package org.whispersystems.textsecuregcm;
 
 import com.codahale.metrics.SharedMetricRegistries;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.base.Optional;
@@ -27,9 +26,8 @@ import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.jaxrs.listing.ApiListingResource;
-import io.swagger.jaxrs.listing.SwaggerSerializers;
+import io.paradoxical.dropwizard.swagger.AppSwaggerConfiguration;
+import io.paradoxical.dropwizard.swagger.bundles.SwaggerUIBundle;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.skife.jdbi.v2.DBI;
@@ -95,6 +93,22 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
                 return configuration.getMessageStoreConfiguration();
             }
         });
+        bootstrap.addBundle(
+                new SwaggerUIBundle(env -> new AppSwaggerConfiguration(env) {
+                    {
+                        setTitle("Whisper Server App");
+                        setDescription("Mobdev Server App");
+
+                        // The package name to look for swagger resources under
+                        setResourcePackage("org.whispersystems.textsecuregcm.controllers");
+
+                        setLicense("Apache 2.0");
+                        setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
+                        setContact("admin@mobdev.io");
+                        setVersion("1.0");
+                    }
+                }));
+
     }
 
     @Override
@@ -210,14 +224,6 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         environment.jersey().register(keysController);
         environment.jersey().register(messageController);
         environment.jersey().register(profileController);
-        environment.jersey().register(new ApiListingResource());
-        environment.jersey().register(new SwaggerSerializers());
-//        environment.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setTitle("Whisper Server App");
-        beanConfig.setVersion("1.0.0");
-        beanConfig.setResourcePackage("org.whispersystems.textsecuregcm.controllers");
-        beanConfig.setScan(true);
 
         WebSocketEnvironment webSocketEnvironment = new WebSocketEnvironment(environment,
                                                                              config.getWebSocketConfiguration(), 90000);

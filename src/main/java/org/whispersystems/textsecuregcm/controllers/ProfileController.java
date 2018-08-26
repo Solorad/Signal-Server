@@ -1,13 +1,13 @@
 package org.whispersystems.textsecuregcm.controllers;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.apache.commons.codec.binary.Base64;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
@@ -21,22 +21,15 @@ import org.whispersystems.textsecuregcm.storage.Account;
 import org.whispersystems.textsecuregcm.storage.AccountsManager;
 import org.whispersystems.textsecuregcm.util.Pair;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.SecureRandom;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import io.dropwizard.auth.Auth;
-
 @Path("/v1/profile")
+@Api(value = "/v1/profile", description = "Profile controller")
 public class ProfileController {
 
   private final RateLimiters     rateLimiters;
@@ -73,6 +66,7 @@ public class ProfileController {
 
   @Timed
   @GET
+  @ApiOperation(value = "Get profile", notes = "Get account profile")
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{number}")
   public Profile getProfile(@Auth Account account,
@@ -97,6 +91,7 @@ public class ProfileController {
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/name/{name}")
+  @ApiOperation(value = "Set profile", notes = "Set profile")
   public void setProfile(@Auth Account account, @PathParam("name") @UnwrapValidatedValue(true) @Length(min = 72,max= 72) Optional<String> name) {
     account.setName(name.orNull());
     accountsManager.update(account);
@@ -107,6 +102,7 @@ public class ProfileController {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/form/avatar")
+  @ApiOperation(value = "Get avatar upload form", notes = "Get avatar upload form")
   public ProfileAvatarUploadAttributes getAvatarUploadForm(@Auth Account account) {
     String               previousAvatar = account.getAvatar();
     ZonedDateTime        now            = ZonedDateTime.now(ZoneOffset.UTC);

@@ -18,41 +18,27 @@ package org.whispersystems.textsecuregcm.controllers;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.entities.PreKeyCount;
-import org.whispersystems.textsecuregcm.entities.PreKeyResponseItem;
-import org.whispersystems.textsecuregcm.entities.PreKeyResponse;
-import org.whispersystems.textsecuregcm.entities.PreKeyState;
-import org.whispersystems.textsecuregcm.entities.PreKey;
-import org.whispersystems.textsecuregcm.entities.SignedPreKey;
+import org.whispersystems.textsecuregcm.entities.*;
 import org.whispersystems.textsecuregcm.federation.FederatedClientManager;
 import org.whispersystems.textsecuregcm.federation.NoSuchPeerException;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
-import org.whispersystems.textsecuregcm.storage.Account;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.Device;
-import org.whispersystems.textsecuregcm.storage.KeyRecord;
-import org.whispersystems.textsecuregcm.storage.Keys;
+import org.whispersystems.textsecuregcm.storage.*;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.LinkedList;
 import java.util.List;
 
-import io.dropwizard.auth.Auth;
-
 @Path("/v2/keys")
+@Api(value = "/v2/keys", description = "Operations with keys")
 public class KeysController {
 
   private static final Logger logger = LoggerFactory.getLogger(KeysController.class);
@@ -73,6 +59,7 @@ public class KeysController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Get account status", notes = "Get account status")
   public PreKeyCount getStatus(@Auth Account account) {
     int count = keys.getCount(account.getNumber(), account.getAuthenticatedDevice().get().getId());
 
@@ -85,6 +72,7 @@ public class KeysController {
 
   @Timed
   @PUT
+  @ApiOperation(value = "Set account keys", notes = "Set account keys")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setKeys(@Auth Account account, @Valid PreKeyState preKeys)  {
     Device  device        = account.getAuthenticatedDevice().get();
@@ -110,6 +98,7 @@ public class KeysController {
   @Timed
   @GET
   @Path("/{number}/{device_id}")
+  @ApiOperation(value = "Get device keys", notes = "Get device keys")
   @Produces(MediaType.APPLICATION_JSON)
   public Optional<PreKeyResponse> getDeviceKeys(@Auth                   Account account,
                                                 @PathParam("number")    String number,
@@ -160,6 +149,7 @@ public class KeysController {
   @Timed
   @PUT
   @Path("/signed")
+  @ApiOperation(value = "Set signed key", notes = "Set signed key")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setSignedKey(@Auth Account account, @Valid SignedPreKey signedPreKey) {
     Device device = account.getAuthenticatedDevice().get();
@@ -170,6 +160,7 @@ public class KeysController {
   @Timed
   @GET
   @Path("/signed")
+  @ApiOperation(value = "Get signed key", notes = "Get signed key")
   @Produces(MediaType.APPLICATION_JSON)
   public Optional<SignedPreKey> getSignedKey(@Auth Account account) {
     Device       device       = account.getAuthenticatedDevice().get();
