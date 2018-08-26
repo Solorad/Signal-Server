@@ -1,5 +1,6 @@
 package org.whispersystems.textsecuregcm.tests.controllers;
 
+import io.dropwizard.testing.junit.ResourceTestRule;
 import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -17,7 +18,6 @@ import org.whispersystems.textsecuregcm.util.SystemMapper;
 
 import java.net.MalformedURLException;
 
-import io.dropwizard.testing.junit.ResourceTestRule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,7 +59,7 @@ public class AttachmentControllerTest {
 
     assertThat(descriptor.getLocation()).startsWith("https://attachment-bucket.s3-accelerate.amazonaws.com");
     assertThat(descriptor.getId()).isGreaterThan(0);
-    assertThat(descriptor.getIdString()).isNotBlank();
+    assertThat(descriptor.getIdString()).isNotEmpty();
   }
 
   @Test
@@ -72,7 +72,7 @@ public class AttachmentControllerTest {
 
     assertThat(descriptor.getLocation()).startsWith("https://s3.amazonaws.com");
     assertThat(descriptor.getId()).isGreaterThan(0);
-    assertThat(descriptor.getIdString()).isNotBlank();
+    assertThat(descriptor.getIdString()).isNotEmpty();
   }
 
   @Test

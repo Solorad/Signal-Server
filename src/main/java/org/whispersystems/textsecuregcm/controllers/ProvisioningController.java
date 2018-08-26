@@ -1,6 +1,9 @@
 package org.whispersystems.textsecuregcm.controllers;
 
 import com.codahale.metrics.annotation.Timed;
+import io.dropwizard.auth.Auth;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.whispersystems.textsecuregcm.entities.ProvisioningMessage;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.push.PushSender;
@@ -11,20 +14,14 @@ import org.whispersystems.textsecuregcm.websocket.InvalidWebsocketAddressExcepti
 import org.whispersystems.textsecuregcm.websocket.ProvisioningAddress;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-import io.dropwizard.auth.Auth;
-
 @Path("/v1/provisioning")
-public class ProvisioningController {
+@Api(value = "/v1/provisioning", description = "Provisioning controller")
+public class ProvisioningController {                     
 
   private final RateLimiters    rateLimiters;
   private final WebsocketSender websocketSender;
@@ -39,6 +36,7 @@ public class ProvisioningController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Send provisioning message", notes = "Send provisioning message")
   public void sendProvisioningMessage(@Auth                     Account source,
                                       @PathParam("destination") String destinationName,
                                       @Valid                    ProvisioningMessage message)

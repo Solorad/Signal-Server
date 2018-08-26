@@ -19,46 +19,29 @@ package org.whispersystems.textsecuregcm.controllers;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.auth.AuthenticationCredentials;
-import org.whispersystems.textsecuregcm.auth.AuthorizationHeader;
-import org.whispersystems.textsecuregcm.auth.InvalidAuthorizationHeaderException;
-import org.whispersystems.textsecuregcm.auth.StoredVerificationCode;
-import org.whispersystems.textsecuregcm.entities.AccountAttributes;
-import org.whispersystems.textsecuregcm.entities.DeviceInfo;
-import org.whispersystems.textsecuregcm.entities.DeviceInfoList;
-import org.whispersystems.textsecuregcm.entities.DeviceResponse;
+import org.whispersystems.textsecuregcm.auth.*;
+import org.whispersystems.textsecuregcm.entities.*;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
-import org.whispersystems.textsecuregcm.storage.Account;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.Device;
-import org.whispersystems.textsecuregcm.storage.MessagesManager;
-import org.whispersystems.textsecuregcm.storage.PendingDevicesManager;
+import org.whispersystems.textsecuregcm.storage.*;
 import org.whispersystems.textsecuregcm.util.Util;
 import org.whispersystems.textsecuregcm.util.VerificationCode;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import io.dropwizard.auth.Auth;
-
 @Path("/v1/devices")
+@Api(value="/v1/devices", description="Operations with devices")
 public class DeviceController {
 
   private final Logger logger = LoggerFactory.getLogger(DeviceController.class);
@@ -87,6 +70,7 @@ public class DeviceController {
   @Timed
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Get account devices", notes = "Get account devices")
   public DeviceInfoList getDevices(@Auth Account account) {
     List<DeviceInfo> devices = new LinkedList<>();
 
@@ -101,6 +85,7 @@ public class DeviceController {
   @Timed
   @DELETE
   @Path("/{device_id}")
+  @ApiOperation(value = "Remove device", notes = "Remove device")
   public void removeDevice(@Auth Account account, @PathParam("device_id") long deviceId) {
     if (account.getAuthenticatedDevice().get().getId() != Device.MASTER_ID) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
@@ -115,6 +100,7 @@ public class DeviceController {
   @GET
   @Path("/provisioning/code")
   @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Create device token", notes = "Create device token")
   public VerificationCode createDeviceToken(@Auth Account account)
       throws RateLimitExceededException, DeviceLimitExceededException
   {
@@ -148,6 +134,7 @@ public class DeviceController {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/{verification_code}")
+  @ApiOperation(value = "Verify device token", notes = "Verify device token")
   public DeviceResponse verifyDeviceToken(@PathParam("verification_code") String verificationCode,
                                           @HeaderParam("Authorization")   String authorizationHeader,
                                           @Valid                          AccountAttributes accountAttributes)

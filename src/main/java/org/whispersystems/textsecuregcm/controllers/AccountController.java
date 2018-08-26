@@ -22,39 +22,22 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
+import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.auth.AuthenticationCredentials;
-import org.whispersystems.textsecuregcm.auth.AuthorizationHeader;
-import org.whispersystems.textsecuregcm.auth.InvalidAuthorizationHeaderException;
-import org.whispersystems.textsecuregcm.auth.StoredVerificationCode;
-import org.whispersystems.textsecuregcm.auth.TurnToken;
-import org.whispersystems.textsecuregcm.auth.TurnTokenGenerator;
+import org.whispersystems.textsecuregcm.auth.*;
 import org.whispersystems.textsecuregcm.entities.*;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.sms.SmsSender;
 import org.whispersystems.textsecuregcm.sms.TwilioSmsSender;
-import org.whispersystems.textsecuregcm.storage.Account;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.Device;
-import org.whispersystems.textsecuregcm.storage.MessagesManager;
-import org.whispersystems.textsecuregcm.storage.PendingAccountsManager;
+import org.whispersystems.textsecuregcm.storage.*;
 import org.whispersystems.textsecuregcm.util.Constants;
 import org.whispersystems.textsecuregcm.util.Util;
 import org.whispersystems.textsecuregcm.util.VerificationCode;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -64,9 +47,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import io.dropwizard.auth.Auth;
 
 @Path("/v1/accounts")
+@Produces(MediaType.APPLICATION_JSON)
+@Api(value="/v1/accounts", description="Operations on the accounts")
 public class AccountController {
 
   private final Logger         logger         = LoggerFactory.getLogger(AccountController.class);
@@ -102,6 +86,10 @@ public class AccountController {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{transport}/code/{number}")
+  @ApiOperation(value="Create account", notes="User number which will be used via twilio is needed")
+  @ApiResponses(value={
+          @ApiResponse(code=400, message="Invalid ID"),
+  })
   public Response createAccount(@PathParam("transport") String transport,
                                 @PathParam("number")    String number,
                                 @QueryParam("client")   Optional<String> client)
@@ -138,7 +126,7 @@ public class AccountController {
       smsSender.deliverVoxVerification(number, verificationCode.getVerificationCodeSpeech());
     }
 
-    CreateAccountResponse response = new CreateAccountResponse(200, "sms code have been sent");
+    AccountResponse response = new AccountResponse(200, "sms code have been sent");
     return Response.ok(response).build();
   }
 
@@ -146,8 +134,12 @@ public class AccountController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value="Verify account", notes="Verification of account. Please check page https://github.com/signalapp/Signal-Server/wiki/API-Protocol for details about account attributes")
+  @ApiResponses(value={
+          @ApiResponse(code=400, message="Invalid ID"),
+  })
   @Path("/code/{verification_code}")
-  public void verifyAccount(@PathParam("verification_code") String verificationCode,
+  public Response verifyAccount(@PathParam("verification_code") String verificationCode,
                             @HeaderParam("Authorization")   String authorizationHeader,
                             @HeaderParam("X-Signal-Agent")  String userAgent,
                             @Valid                          AccountAttributes accountAttributes)
@@ -194,6 +186,8 @@ public class AccountController {
       }
 
       createAccount(number, password, userAgent, accountAttributes);
+      AccountResponse response = new AccountResponse(200, "user was successfully verified");
+      return Response.ok(response).build();
     } catch (InvalidAuthorizationHeaderException e) {
       logger.info("Bad Authorization Header", e);
       throw new WebApplicationException(Response.status(401).build());
@@ -245,6 +239,7 @@ public class AccountController {
   @Timed
   @PUT
   @Path("/apn/")
+  @ApiOperation(value="Registering an APN", notes="Registering an APN")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setApnRegistrationId(@Auth Account account, @Valid ApnRegistrationId registrationId) {
     Device device = account.getAuthenticatedDevice().get();
@@ -258,6 +253,7 @@ public class AccountController {
   @Timed
   @DELETE
   @Path("/apn/")
+  @ApiOperation(value="Delete an APN", notes="Registering an APN")
   public void deleteApnRegistrationId(@Auth Account account) {
     Device device = account.getAuthenticatedDevice().get();
     device.setApnId(null);
@@ -269,6 +265,7 @@ public class AccountController {
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/pin/")
+  @ApiOperation(value="Set new PIN", notes="Set new PIN")
   public void setPin(@Auth Account account, @Valid RegistrationLock accountLock) {
     account.setPin(accountLock.getPin());
     accounts.update(account);
@@ -277,6 +274,7 @@ public class AccountController {
   @Timed
   @DELETE
   @Path("/pin/")
+  @ApiOperation(value="Remove a PIN", notes="Remove a PIN")
   public void removePin(@Auth Account account) {
     account.setPin(null);
     accounts.update(account);
@@ -286,6 +284,7 @@ public class AccountController {
   @PUT
   @Path("/attributes/")
   @Consumes(MediaType.APPLICATION_JSON)
+  @ApiOperation(value="Remove a PIN", notes="Set account attributes")
   public void setAccountAttributes(@Auth Account account,
                                    @HeaderParam("X-Signal-Agent") String userAgent,
                                    @Valid AccountAttributes attributes)
@@ -309,6 +308,7 @@ public class AccountController {
   @Timed
   @POST
   @Path("/voice/twiml/{code}")
+  @ApiOperation(value="Get Twiml's 'Your Signal verification code is:'", notes="TwiML (the Twilio Markup Language) return voice message 'Your Signal verification code is:'")
   @Produces(MediaType.APPLICATION_XML)
   public Response getTwiml(@PathParam("code") String encodedVerificationText) {
     return Response.ok().entity(String.format(TwilioSmsSender.SAY_TWIML,
