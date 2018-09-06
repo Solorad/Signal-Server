@@ -17,9 +17,11 @@
 package org.whispersystems.textsecuregcm.limits;
 
 
+import lombok.Getter;
 import org.whispersystems.textsecuregcm.configuration.RateLimitsConfiguration;
 import org.whispersystems.textsecuregcm.redis.ReplicatedJedisPool;
 
+@Getter
 public class RateLimiters {
 
   private final RateLimiter smsDestinationLimiter;
@@ -39,6 +41,8 @@ public class RateLimiters {
   private final RateLimiter turnLimiter;
 
   private final RateLimiter profileLimiter;
+
+  private final RateLimiter bandwidthLimiter;
 
   public RateLimiters(RateLimitsConfiguration config, ReplicatedJedisPool cacheClient) {
     this.smsDestinationLimiter = new RateLimiter(cacheClient, "smsDestination",
@@ -92,58 +96,9 @@ public class RateLimiters {
     this.profileLimiter = new RateLimiter(cacheClient, "profile",
                                           config.getProfile().getBucketSize(),
                                           config.getProfile().getLeakRatePerMinute());
-  }
 
-  public RateLimiter getAllocateDeviceLimiter() {
-    return allocateDeviceLimiter;
+    this.bandwidthLimiter = new RateLimiter(cacheClient, "bandwidth",
+                                            config.getBandwidth().getBucketSize(),
+                                            config.getBandwidth().getLeakRatePerMinute());
   }
-
-  public RateLimiter getVerifyDeviceLimiter() {
-    return verifyDeviceLimiter;
-  }
-
-  public RateLimiter getMessagesLimiter() {
-    return messagesLimiter;
-  }
-
-  public RateLimiter getPreKeysLimiter() {
-    return preKeysLimiter;
-  }
-
-  public RateLimiter getContactsLimiter() {
-    return contactsLimiter;
-  }
-
-  public RateLimiter getAttachmentLimiter() {
-    return this.attachmentLimiter;
-  }
-
-  public RateLimiter getSmsDestinationLimiter() {
-    return smsDestinationLimiter;
-  }
-
-  public RateLimiter getVoiceDestinationLimiter() {
-    return voiceDestinationLimiter;
-  }
-
-  public RateLimiter getVoiceDestinationDailyLimiter() {
-    return voiceDestinationDailyLimiter;
-  }
-
-  public RateLimiter getVerifyLimiter() {
-    return verifyLimiter;
-  }
-
-  public RateLimiter getPinLimiter() {
-    return pinLimiter;
-  }
-
-  public RateLimiter getTurnLimiter() {
-    return turnLimiter;
-  }
-
-  public RateLimiter getProfileLimiter() {
-    return profileLimiter;
-  }
-
 }

@@ -17,7 +17,11 @@
 package org.whispersystems.textsecuregcm.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
 
+@Getter
 public class RateLimitsConfiguration {
 
   @JsonProperty
@@ -42,7 +46,7 @@ public class RateLimitsConfiguration {
   private RateLimitConfiguration contactQueries = new RateLimitConfiguration(50000, 50000);
 
   @JsonProperty
-  private RateLimitConfiguration prekeys = new RateLimitConfiguration(3, 1.0 / 10.0);
+  private RateLimitConfiguration preKeys = new RateLimitConfiguration(3, 1.0 / 10.0);
 
   @JsonProperty
   private RateLimitConfiguration messages = new RateLimitConfiguration(60, 60);
@@ -59,78 +63,17 @@ public class RateLimitsConfiguration {
   @JsonProperty
   private RateLimitConfiguration profile = new RateLimitConfiguration(4320, 3);
 
-  public RateLimitConfiguration getAllocateDevice() {
-    return allocateDevice;
-  }
+  @JsonProperty
+  private RateLimitConfiguration bandwidth = new RateLimitConfiguration(60, 60);
 
-  public RateLimitConfiguration getVerifyDevice() {
-    return verifyDevice;
-  }
 
-  public RateLimitConfiguration getMessages() {
-    return messages;
-  }
-
-  public RateLimitConfiguration getPreKeys() {
-    return prekeys;
-  }
-
-  public RateLimitConfiguration getContactQueries() {
-    return contactQueries;
-  }
-
-  public RateLimitConfiguration getAttachments() {
-    return attachments;
-  }
-
-  public RateLimitConfiguration getSmsDestination() {
-    return smsDestination;
-  }
-
-  public RateLimitConfiguration getVoiceDestination() {
-    return voiceDestination;
-  }
-
-  public RateLimitConfiguration getVoiceDestinationDaily() {
-    return voiceDestinationDaily;
-  }
-
-  public RateLimitConfiguration getVerifyNumber() {
-    return verifyNumber;
-  }
-
-  public RateLimitConfiguration getVerifyPin() {
-    return verifyPin;
-  }
-
-  public RateLimitConfiguration getTurnAllocations() {
-    return turnAllocations;
-  }
-
-  public RateLimitConfiguration getProfile() {
-    return profile;
-  }
-
+  @AllArgsConstructor
+  @Data
   public static class RateLimitConfiguration {
     @JsonProperty
     private int bucketSize;
 
     @JsonProperty
     private double leakRatePerMinute;
-
-    public RateLimitConfiguration(int bucketSize, double leakRatePerMinute) {
-      this.bucketSize        = bucketSize;
-      this.leakRatePerMinute = leakRatePerMinute;
-    }
-
-    public RateLimitConfiguration() {}
-
-    public int getBucketSize() {
-      return bucketSize;
-    }
-
-    public double getLeakRatePerMinute() {
-      return leakRatePerMinute;
-    }
   }
 }

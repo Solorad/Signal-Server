@@ -17,64 +17,49 @@
 package org.whispersystems.textsecuregcm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whispersystems.textsecuregcm.configuration.ApnConfiguration;
-import org.whispersystems.textsecuregcm.configuration.FederationConfiguration;
-import org.whispersystems.textsecuregcm.configuration.GcmConfiguration;
-import org.whispersystems.textsecuregcm.configuration.MaxDeviceConfiguration;
-import org.whispersystems.textsecuregcm.configuration.MessageCacheConfiguration;
-import org.whispersystems.textsecuregcm.configuration.ProfilesConfiguration;
-import org.whispersystems.textsecuregcm.configuration.PushConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RateLimitsConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RedPhoneConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RedisConfiguration;
-import org.whispersystems.textsecuregcm.configuration.AttachmentsConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TestDeviceConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TurnConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TwilioConfiguration;
+import io.dropwizard.Configuration;
+import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.db.DataSourceFactory;
+import lombok.Getter;
+import org.whispersystems.textsecuregcm.configuration.*;
 import org.whispersystems.websocket.configuration.WebSocketConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import io.dropwizard.Configuration;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.db.DataSourceFactory;
-
+@Getter
 public class WhisperServerConfiguration extends Configuration {
 
   @NotNull
   @Valid
   @JsonProperty
-  private TwilioConfiguration twilio;
+  private TwilioConfiguration twilioConfiguration;
 
   @NotNull
   @Valid
   @JsonProperty
-  private PushConfiguration push;
+  private PushConfiguration pushConfiguration;
 
   @NotNull
   @Valid
   @JsonProperty
-  private AttachmentsConfiguration attachments;
+  private AttachmentsConfiguration attachmentsConfiguration;
 
   @NotNull
   @Valid
   @JsonProperty
-  private ProfilesConfiguration profiles;
+  private ProfilesConfiguration profilesConfiguration;
 
   @NotNull
   @Valid
   @JsonProperty
-  private RedisConfiguration cache;
+  private RedisConfiguration cacheConfiguration;
 
   @NotNull
   @Valid
   @JsonProperty
-  private RedisConfiguration directory;
+  private RedisConfiguration directoryConfiguration;
 
   @NotNull
   @Valid
@@ -84,141 +69,75 @@ public class WhisperServerConfiguration extends Configuration {
   @NotNull
   @Valid
   @JsonProperty
-  private MessageCacheConfiguration messageCache;
+  private MessageCacheConfiguration messageCacheConfiguration;
 
   @Valid
   @NotNull
   @JsonProperty
-  private DataSourceFactory messageStore;
+  private DataSourceFactory messageStoreConfiguration;
 
   @Valid
   @NotNull
   @JsonProperty
-  private List<TestDeviceConfiguration> testDevices = new LinkedList<>();
+  private List<TestDeviceConfiguration> testDevicesConfiguration = new LinkedList<>();
 
   @Valid
   @NotNull
   @JsonProperty
-  private List<MaxDeviceConfiguration> maxDevices = new LinkedList<>();
+  private List<MaxDeviceConfiguration> maxDevicesConfiguration = new LinkedList<>();
 
   @Valid
   @JsonProperty
-  private FederationConfiguration federation = new FederationConfiguration();
-
-  @Valid
-  @NotNull
-  @JsonProperty
-  private DataSourceFactory database = new DataSourceFactory();
-
-  @JsonProperty
-  private DataSourceFactory read_database;
+  private FederationConfiguration federationConfiguration = new FederationConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private RateLimitsConfiguration limits = new RateLimitsConfiguration();
+  private DataSourceFactory dataSourceFactory = new DataSourceFactory();
+
+  @JsonProperty
+  private DataSourceFactory readDataSourceFactory;
 
   @Valid
   @NotNull
   @JsonProperty
-  private JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
+  private RateLimitsConfiguration limitsConfiguration = new RateLimitsConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private WebSocketConfiguration webSocket = new WebSocketConfiguration();
+  private JerseyClientConfiguration jerseyClientConfiguration = new JerseyClientConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private TurnConfiguration turn;
+  private WebSocketConfiguration webSocketConfiguration = new WebSocketConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private GcmConfiguration gcm;
+  private TurnConfiguration turnConfiguration;
 
   @Valid
   @NotNull
   @JsonProperty
-  private ApnConfiguration apn;
+  private GcmConfiguration gcmConfiguration;
 
-  public WebSocketConfiguration getWebSocketConfiguration() {
-    return webSocket;
-  }
+  @Valid
+  @NotNull
+  @JsonProperty
+  private ApnConfiguration apnConfiguration;
 
-  public TwilioConfiguration getTwilioConfiguration() {
-    return twilio;
-  }
+  @Valid
+  @NotNull
+  @JsonProperty
+  private BandwidthConfiguration bandwidthConfiguration;
 
-  public PushConfiguration getPushConfiguration() {
-    return push;
-  }
-
-  public JerseyClientConfiguration getJerseyClientConfiguration() {
-    return httpClient;
-  }
-
-  public AttachmentsConfiguration getAttachmentsConfiguration() {
-    return attachments;
-  }
-
-  public RedisConfiguration getCacheConfiguration() {
-    return cache;
-  }
-
-  public RedisConfiguration getDirectoryConfiguration() {
-    return directory;
-  }
-
-  public MessageCacheConfiguration getMessageCacheConfiguration() {
-    return messageCache;
-  }
-
-  public RedisConfiguration getPushScheduler() {
-    return pushScheduler;
-  }
-
-  public DataSourceFactory getMessageStoreConfiguration() {
-    return messageStore;
-  }
-
-  public DataSourceFactory getDataSourceFactory() {
-    return database;
-  }
-
-  public DataSourceFactory getReadDataSourceFactory() {
-    return read_database;
-  }
-
-  public RateLimitsConfiguration getLimitsConfiguration() {
-    return limits;
-  }
-
-  public FederationConfiguration getFederationConfiguration() {
-    return federation;
-  }
-
-  public TurnConfiguration getTurnConfiguration() {
-    return turn;
-  }
-
-  public GcmConfiguration getGcmConfiguration() {
-    return gcm;
-  }
-
-  public ApnConfiguration getApnConfiguration() {
-    return apn;
-  }
-
-  public ProfilesConfiguration getProfilesConfiguration() {
-    return profiles;
-  }
 
   public Map<String, Integer> getTestDevices() {
     Map<String, Integer> results = new HashMap<>();
 
-    for (TestDeviceConfiguration testDeviceConfiguration : testDevices) {
+    for (TestDeviceConfiguration testDeviceConfiguration : testDevicesConfiguration) {
       results.put(testDeviceConfiguration.getNumber(),
                   testDeviceConfiguration.getCode());
     }
@@ -229,7 +148,7 @@ public class WhisperServerConfiguration extends Configuration {
   public Map<String, Integer> getMaxDevices() {
     Map<String, Integer> results = new HashMap<>();
 
-    for (MaxDeviceConfiguration maxDeviceConfiguration : maxDevices) {
+    for (MaxDeviceConfiguration maxDeviceConfiguration : maxDevicesConfiguration) {
       results.put(maxDeviceConfiguration.getNumber(),
                   maxDeviceConfiguration.getCount());
     }
