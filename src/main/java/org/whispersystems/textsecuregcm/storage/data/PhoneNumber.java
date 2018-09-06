@@ -17,4 +17,6 @@ public class PhoneNumber {
     private String state;
     @JsonProperty
     private String price;
+    @JsonProperty
+    private String location;
 }

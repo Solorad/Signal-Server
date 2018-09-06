@@ -11,9 +11,7 @@ import org.whispersystems.textsecuregcm.storage.Account;
 import org.whispersystems.textsecuregcm.storage.BandwidthManager;
 import org.whispersystems.textsecuregcm.storage.data.PhoneNumbersResponse;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,6 +56,30 @@ public class BandwidthController {
         logger.info("getAvailableTollFreeNumbers started");
         Map<String, Object> params = getParameterMap(account, uriInfo);
         return bandwidthManager.getAvailableTollFreeNumbers(params);
+    }
+
+    @Timed
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/availableNumbers/local")
+    @ApiOperation(value = "Order available local number", notes = "For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/postAvailableNumbersLocal.html")
+    public PhoneNumbersResponse orderLocalNumber(@Auth Account account, @Context UriInfo uriInfo)
+            throws RateLimitExceededException {
+        logger.info("getAvailableTollFreeNumbers started");
+        Map<String, Object> params = getParameterMap(account, uriInfo);
+        return bandwidthManager.orderAvailableLocalNumbers(params);
+    }
+
+    @Timed
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/availableNumbers/tollFree")
+    @ApiOperation(value = "Order available toll free number", notes = "For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/postAvailableNumbersTollFree.html")
+    public PhoneNumbersResponse orderTollFreeNumber(@Auth Account account, @Context UriInfo uriInfo)
+            throws RateLimitExceededException {
+        logger.info("getAvailableTollFreeNumbers started");
+        Map<String, Object> params = getParameterMap(account, uriInfo);
+        return bandwidthManager.orderAvailableTollFreeNumbers(params);
     }
 
     private Map<String, Object> getParameterMap(@Auth Account account, @Context UriInfo uriInfo)
