@@ -1,5 +1,12 @@
 package org.whispersystems.textsecuregcm.workers;
 
+import io.dropwizard.cli.ConfiguredCommand;
+import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.jdbi.ImmutableListContainerFactory;
+import io.dropwizard.jdbi.ImmutableSetContainerFactory;
+import io.dropwizard.jdbi.OptionalContainerFactory;
+import io.dropwizard.jdbi.args.OptionalArgumentFactory;
+import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
@@ -8,14 +15,6 @@ import org.whispersystems.textsecuregcm.WhisperServerConfiguration;
 import org.whispersystems.textsecuregcm.storage.Messages;
 
 import java.util.concurrent.TimeUnit;
-
-import io.dropwizard.cli.ConfiguredCommand;
-import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.jdbi.ImmutableListContainerFactory;
-import io.dropwizard.jdbi.ImmutableSetContainerFactory;
-import io.dropwizard.jdbi.OptionalContainerFactory;
-import io.dropwizard.jdbi.args.OptionalArgumentFactory;
-import io.dropwizard.setup.Bootstrap;
 
 public class TrimMessagesCommand extends ConfiguredCommand<WhisperServerConfiguration> {
   private final Logger logger = LoggerFactory.getLogger(VacuumCommand.class);
@@ -30,7 +29,7 @@ public class TrimMessagesCommand extends ConfiguredCommand<WhisperServerConfigur
                      WhisperServerConfiguration config)
       throws Exception
   {
-    DataSourceFactory messageDbConfig = config.getMessageStoreConfiguration();
+    DataSourceFactory messageDbConfig = config.getMessageStore();
     DBI               messageDbi      = new DBI(messageDbConfig.getUrl(), messageDbConfig.getUser(), messageDbConfig.getPassword());
 
     messageDbi.registerArgumentFactory(new OptionalArgumentFactory(messageDbConfig.getDriverClass()));

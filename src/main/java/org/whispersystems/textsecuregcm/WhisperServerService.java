@@ -87,14 +87,14 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         bootstrap.addBundle(new NameableMigrationsBundle<WhisperServerConfiguration>("accountdb", "accountsdb.xml") {
             @Override
             public DataSourceFactory getDataSourceFactory(WhisperServerConfiguration configuration) {
-                return configuration.getDataSourceFactory();
+                return configuration.getDatabase();
             }
         });
 
         bootstrap.addBundle(new NameableMigrationsBundle<WhisperServerConfiguration>("messagedb", "messagedb.xml") {
             @Override
             public DataSourceFactory getDataSourceFactory(WhisperServerConfiguration configuration) {
-                return configuration.getMessageStoreConfiguration();
+                return configuration.getMessageStore();
             }
         });
         bootstrap.addBundle(
@@ -129,8 +129,8 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         environment.getObjectMapper().setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 
         DBIFactory dbiFactory = new DBIFactory();
-        DBI database = dbiFactory.build(environment, config.getDataSourceFactory(), "accountdb");
-        DBI messagedb = dbiFactory.build(environment, config.getMessageStoreConfiguration(), "messagedb");
+        DBI database = dbiFactory.build(environment, config.getDatabase(), "accountdb");
+        DBI messagedb = dbiFactory.build(environment, config.getMessageStore(), "messagedb");
 
         Accounts accounts = database.onDemand(Accounts.class);
         PendingAccounts pendingAccounts = database.onDemand(PendingAccounts.class);
@@ -138,13 +138,13 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         Keys keys = database.onDemand(Keys.class);
         Messages messages = messagedb.onDemand(Messages.class);
 
-        RedisClientFactory cacheClientFactory = new RedisClientFactory(config.getCacheConfiguration().getUrl(),
-                                                                       config.getCacheConfiguration().getReplicaUrls());
-        RedisClientFactory directoryClientFactory = new RedisClientFactory(config.getDirectoryConfiguration().getUrl(),
-                                                                           config.getDirectoryConfiguration().getReplicaUrls());
+        RedisClientFactory cacheClientFactory = new RedisClientFactory(config.getCache().getUrl(),
+                                                                       config.getCache().getReplicaUrls());
+        RedisClientFactory directoryClientFactory = new RedisClientFactory(config.getDirectory().getUrl(),
+                                                                           config.getDirectory().getReplicaUrls());
         RedisClientFactory messagesClientFactory = new RedisClientFactory(
-                config.getMessageCacheConfiguration().getRedisConfiguration().getUrl(),
-                config.getMessageCacheConfiguration().getRedisConfiguration().getReplicaUrls());
+                config.getMessageCache().getRedisConfiguration().getUrl(),
+                config.getMessageCache().getRedisConfiguration().getReplicaUrls());
         RedisClientFactory pushSchedulerClientFactory = new RedisClientFactory(config.getPushScheduler().getUrl(),
                                                                                config.getPushScheduler().getReplicaUrls());
 
@@ -158,32 +158,32 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         PendingDevicesManager pendingDevicesManager = new PendingDevicesManager(pendingDevices, cacheClient);
         AccountsManager accountsManager = new AccountsManager(accounts, directory, cacheClient);
         FederatedClientManager federatedClientManager = new FederatedClientManager(environment,
-                                                                                   config.getJerseyClientConfiguration(),
-                                                                                   config.getFederationConfiguration());
+                                                                                   config.getHttpClient(),
+                                                                                   config.getFederation());
         MessagesCache messagesCache = new MessagesCache(messagesClient, messages, accountsManager,
-                                                        config.getMessageCacheConfiguration().getPersistDelayMinutes());
+                                                        config.getMessageCache().getPersistDelayMinutes());
         MessagesManager messagesManager = new MessagesManager(messages, messagesCache,
-                                                              config.getMessageCacheConfiguration().getCacheRate());
+                                                              config.getMessageCache().getCacheRate());
         DeadLetterHandler deadLetterHandler = new DeadLetterHandler(messagesManager);
         DispatchManager dispatchManager = new DispatchManager(cacheClientFactory, Optional.of(deadLetterHandler));
         PubSubManager pubSubManager = new PubSubManager(cacheClient, dispatchManager);
 //    APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
         APNSender apnSender = null;
-        GCMSender gcmSender = new GCMSender(accountsManager, config.getGcmConfiguration().getApiKey());
+        GCMSender gcmSender = new GCMSender(accountsManager, config.getGcm().getApiKey());
         WebsocketSender websocketSender = new WebsocketSender(messagesManager, pubSubManager);
         AccountAuthenticator deviceAuthenticator = new AccountAuthenticator(accountsManager);
         FederatedPeerAuthenticator federatedPeerAuthenticator = new FederatedPeerAuthenticator(
-                config.getFederationConfiguration());
-        RateLimiters rateLimiters = new RateLimiters(config.getLimitsConfiguration(), cacheClient);
+                config.getFederation());
+        RateLimiters rateLimiters = new RateLimiters(config.getLimits(), cacheClient);
 
         ApnFallbackManager apnFallbackManager = new ApnFallbackManager(pushSchedulerClient, accountsManager);
-        TwilioSmsSender twilioSmsSender = new TwilioSmsSender(config.getTwilioConfiguration());
+        TwilioSmsSender twilioSmsSender = new TwilioSmsSender(config.getTwilio());
         SmsSender smsSender = new SmsSender(twilioSmsSender);
-        UrlSigner urlSigner = new UrlSigner(config.getAttachmentsConfiguration());
+        UrlSigner urlSigner = new UrlSigner(config.getAttachments());
         PushSender pushSender = new PushSender(gcmSender, websocketSender,
-                                               config.getPushConfiguration().getQueueSize());
+                                               config.getPush().getQueueSize());
         ReceiptSender receiptSender = new ReceiptSender(accountsManager, pushSender, federatedClientManager);
-        TurnTokenGenerator turnTokenGenerator = new TurnTokenGenerator(config.getTurnConfiguration());
+        TurnTokenGenerator turnTokenGenerator = new TurnTokenGenerator(config.getTurn());
 
         messagesCache.setPubSubManager(pubSubManager, pushSender);
 
@@ -200,7 +200,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
                                                                     accountsManager, messagesManager,
                                                                     federatedClientManager, apnFallbackManager);
         ProfileController profileController = new ProfileController(rateLimiters, accountsManager,
-                                                                    config.getProfilesConfiguration());
+                                                                    config.getProfiles());
 
         environment.jersey().register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<Account>()
                                                                      .setAuthenticator(deviceAuthenticator)
@@ -214,12 +214,12 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
 
         environment.jersey().register(
                 new AccountController(pendingAccountsManager, accountsManager, rateLimiters, smsSender, messagesManager,
-                                      turnTokenGenerator, config.getTestDevices()));
-        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidthConfiguration());
+                                      turnTokenGenerator, config.getTestDevicesMap()));
+        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidth());
         environment.jersey().register(new BandwidthController(bandwidthManager, rateLimiters));
         environment.jersey().register(
                 new DeviceController(pendingDevicesManager, accountsManager, messagesManager, rateLimiters,
-                                     config.getMaxDevices()));
+                                     config.getMaxDevicesMap()));
         environment.jersey().register(new DirectoryController(rateLimiters, directory));
         environment.jersey().register(
                 new FederationControllerV1(accountsManager, attachmentController, messageController));
@@ -232,7 +232,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         environment.jersey().register(profileController);
 
         WebSocketEnvironment webSocketEnvironment = new WebSocketEnvironment(environment,
-                                                                             config.getWebSocketConfiguration(), 90000);
+                                                                             config.getWebSocket(), 90000);
         webSocketEnvironment.setAuthenticator(new WebSocketAccountAuthenticator(deviceAuthenticator));
         webSocketEnvironment.setConnectListener(
                 new AuthenticatedConnectListener(pushSender, receiptSender, messagesManager, pubSubManager,

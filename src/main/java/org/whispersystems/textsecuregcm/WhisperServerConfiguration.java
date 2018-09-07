@@ -34,32 +34,32 @@ public class WhisperServerConfiguration extends Configuration {
   @NotNull
   @Valid
   @JsonProperty
-  private TwilioConfiguration twilioConfiguration;
+  private TwilioConfiguration twilio;
 
   @NotNull
   @Valid
   @JsonProperty
-  private PushConfiguration pushConfiguration;
+  private PushConfiguration push;
 
   @NotNull
   @Valid
   @JsonProperty
-  private AttachmentsConfiguration attachmentsConfiguration;
+  private AttachmentsConfiguration attachments;
 
   @NotNull
   @Valid
   @JsonProperty
-  private ProfilesConfiguration profilesConfiguration;
+  private ProfilesConfiguration profiles;
 
   @NotNull
   @Valid
   @JsonProperty
-  private RedisConfiguration cacheConfiguration;
+  private RedisConfiguration cache;
 
   @NotNull
   @Valid
   @JsonProperty
-  private RedisConfiguration directoryConfiguration;
+  private RedisConfiguration directory;
 
   @NotNull
   @Valid
@@ -69,75 +69,75 @@ public class WhisperServerConfiguration extends Configuration {
   @NotNull
   @Valid
   @JsonProperty
-  private MessageCacheConfiguration messageCacheConfiguration;
+  private MessageCacheConfiguration messageCache;
 
   @Valid
   @NotNull
   @JsonProperty
-  private DataSourceFactory messageStoreConfiguration;
+  private DataSourceFactory messageStore;
 
   @Valid
   @NotNull
   @JsonProperty
-  private List<TestDeviceConfiguration> testDevicesConfiguration = new LinkedList<>();
+  private List<TestDeviceConfiguration> testDevices = new LinkedList<>();
 
   @Valid
   @NotNull
   @JsonProperty
-  private List<MaxDeviceConfiguration> maxDevicesConfiguration = new LinkedList<>();
+  private List<MaxDeviceConfiguration> maxDevices = new LinkedList<>();
 
   @Valid
   @JsonProperty
-  private FederationConfiguration federationConfiguration = new FederationConfiguration();
-
-  @Valid
-  @NotNull
-  @JsonProperty
-  private DataSourceFactory dataSourceFactory = new DataSourceFactory();
-
-  @JsonProperty
-  private DataSourceFactory readDataSourceFactory;
+  private FederationConfiguration federation = new FederationConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private RateLimitsConfiguration limitsConfiguration = new RateLimitsConfiguration();
+  private DataSourceFactory database = new DataSourceFactory();
+
+  @JsonProperty
+  private DataSourceFactory read_database;
 
   @Valid
   @NotNull
   @JsonProperty
-  private JerseyClientConfiguration jerseyClientConfiguration = new JerseyClientConfiguration();
+  private RateLimitsConfiguration limits = new RateLimitsConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private WebSocketConfiguration webSocketConfiguration = new WebSocketConfiguration();
+  private JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private TurnConfiguration turnConfiguration;
+  private WebSocketConfiguration webSocket = new WebSocketConfiguration();
 
   @Valid
   @NotNull
   @JsonProperty
-  private GcmConfiguration gcmConfiguration;
+  private TurnConfiguration turn;
 
   @Valid
   @NotNull
   @JsonProperty
-  private ApnConfiguration apnConfiguration;
+  private GcmConfiguration gcm;
 
   @Valid
   @NotNull
   @JsonProperty
-  private BandwidthConfiguration bandwidthConfiguration;
+  private ApnConfiguration apn;
+
+  @Valid
+  @NotNull
+  @JsonProperty
+  private BandwidthConfiguration bandwidth;
 
 
-  public Map<String, Integer> getTestDevices() {
+  public Map<String, Integer> getTestDevicesMap() {
     Map<String, Integer> results = new HashMap<>();
 
-    for (TestDeviceConfiguration testDeviceConfiguration : testDevicesConfiguration) {
+    for (TestDeviceConfiguration testDeviceConfiguration : testDevices) {
       results.put(testDeviceConfiguration.getNumber(),
                   testDeviceConfiguration.getCode());
     }
@@ -145,10 +145,10 @@ public class WhisperServerConfiguration extends Configuration {
     return results;
   }
 
-  public Map<String, Integer> getMaxDevices() {
+  public Map<String, Integer> getMaxDevicesMap() {
     Map<String, Integer> results = new HashMap<>();
 
-    for (MaxDeviceConfiguration maxDeviceConfiguration : maxDevicesConfiguration) {
+    for (MaxDeviceConfiguration maxDeviceConfiguration : maxDevices) {
       results.put(maxDeviceConfiguration.getNumber(),
                   maxDeviceConfiguration.getCount());
     }

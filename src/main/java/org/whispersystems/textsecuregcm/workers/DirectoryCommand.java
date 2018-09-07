@@ -17,29 +17,24 @@
 package org.whispersystems.textsecuregcm.workers;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import net.sourceforge.argparse4j.inf.Namespace;
-import org.skife.jdbi.v2.DBI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.WhisperServerConfiguration;
-import org.whispersystems.textsecuregcm.federation.FederatedClientManager;
-import org.whispersystems.textsecuregcm.providers.RedisClientFactory;
-import org.whispersystems.textsecuregcm.redis.ReplicatedJedisPool;
-import org.whispersystems.textsecuregcm.storage.Accounts;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.DirectoryManager;
-
 import io.dropwizard.Application;
-import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.cli.EnvironmentCommand;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
 import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
 import io.dropwizard.jdbi.args.OptionalArgumentFactory;
-import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import redis.clients.jedis.JedisPool;
+import net.sourceforge.argparse4j.inf.Namespace;
+import org.skife.jdbi.v2.DBI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.whispersystems.textsecuregcm.WhisperServerConfiguration;
+import org.whispersystems.textsecuregcm.providers.RedisClientFactory;
+import org.whispersystems.textsecuregcm.redis.ReplicatedJedisPool;
+import org.whispersystems.textsecuregcm.storage.Accounts;
+import org.whispersystems.textsecuregcm.storage.AccountsManager;
+import org.whispersystems.textsecuregcm.storage.DirectoryManager;
 
 public class DirectoryCommand extends EnvironmentCommand<WhisperServerConfiguration> {
 
@@ -64,7 +59,7 @@ public class DirectoryCommand extends EnvironmentCommand<WhisperServerConfigurat
     try {
       environment.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-      DataSourceFactory dbConfig = configuration.getReadDataSourceFactory();
+      DataSourceFactory dbConfig = configuration.getRead_database();
       DBI               dbi      = new DBI(dbConfig.getUrl(), dbConfig.getUser(), dbConfig.getPassword());
 
       dbi.registerArgumentFactory(new OptionalArgumentFactory(dbConfig.getDriverClass()));
@@ -73,13 +68,13 @@ public class DirectoryCommand extends EnvironmentCommand<WhisperServerConfigurat
       dbi.registerContainerFactory(new OptionalContainerFactory());
 
       Accounts            accounts        = dbi.onDemand(Accounts.class);
-      ReplicatedJedisPool cacheClient     = new RedisClientFactory(configuration.getCacheConfiguration().getUrl(), configuration.getCacheConfiguration().getReplicaUrls()).getRedisClientPool();
-      ReplicatedJedisPool redisClient     = new RedisClientFactory(configuration.getDirectoryConfiguration().getUrl(), configuration.getDirectoryConfiguration().getReplicaUrls()).getRedisClientPool();
+      ReplicatedJedisPool cacheClient     = new RedisClientFactory(configuration.getCache().getUrl(), configuration.getCache().getReplicaUrls()).getRedisClientPool();
+      ReplicatedJedisPool redisClient     = new RedisClientFactory(configuration.getDirectory().getUrl(), configuration.getDirectory().getReplicaUrls()).getRedisClientPool();
       DirectoryManager    directory       = new DirectoryManager(redisClient);
       AccountsManager     accountsManager = new AccountsManager(accounts, directory, cacheClient);
 //      FederatedClientManager federatedClientManager = new FederatedClientManager(environment,
-//                                                                                 configuration.getJerseyClientConfiguration(),
-//                                                                                 configuration.getFederationConfiguration());
+//                                                                                 configuration.getHttpClient(),
+//                                                                                 configuration.getFederation());
 
       DirectoryUpdater update = new DirectoryUpdater(accountsManager, directory);
 

@@ -2,6 +2,14 @@ package org.whispersystems.textsecuregcm.workers;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.base.Optional;
+import io.dropwizard.Application;
+import io.dropwizard.cli.EnvironmentCommand;
+import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.jdbi.ImmutableListContainerFactory;
+import io.dropwizard.jdbi.ImmutableSetContainerFactory;
+import io.dropwizard.jdbi.OptionalContainerFactory;
+import io.dropwizard.jdbi.args.OptionalArgumentFactory;
+import io.dropwizard.setup.Environment;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.skife.jdbi.v2.DBI;
@@ -11,24 +19,10 @@ import org.whispersystems.textsecuregcm.WhisperServerConfiguration;
 import org.whispersystems.textsecuregcm.auth.AuthenticationCredentials;
 import org.whispersystems.textsecuregcm.providers.RedisClientFactory;
 import org.whispersystems.textsecuregcm.redis.ReplicatedJedisPool;
-import org.whispersystems.textsecuregcm.storage.Account;
-import org.whispersystems.textsecuregcm.storage.Accounts;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.Device;
-import org.whispersystems.textsecuregcm.storage.DirectoryManager;
+import org.whispersystems.textsecuregcm.storage.*;
 import org.whispersystems.textsecuregcm.util.Base64;
 
 import java.security.SecureRandom;
-
-import io.dropwizard.Application;
-import io.dropwizard.cli.EnvironmentCommand;
-import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.jdbi.ImmutableListContainerFactory;
-import io.dropwizard.jdbi.ImmutableSetContainerFactory;
-import io.dropwizard.jdbi.OptionalContainerFactory;
-import io.dropwizard.jdbi.args.OptionalArgumentFactory;
-import io.dropwizard.setup.Environment;
-import redis.clients.jedis.JedisPool;
 
 public class DeleteUserCommand extends EnvironmentCommand<WhisperServerConfiguration> {
 
@@ -65,7 +59,7 @@ public class DeleteUserCommand extends EnvironmentCommand<WhisperServerConfigura
 
       environment.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-      DataSourceFactory dbConfig = configuration.getDataSourceFactory();
+      DataSourceFactory dbConfig = configuration.getDatabase();
       DBI               dbi      = new DBI(dbConfig.getUrl(), dbConfig.getUser(), dbConfig.getPassword());
 
       dbi.registerArgumentFactory(new OptionalArgumentFactory(dbConfig.getDriverClass()));
@@ -74,8 +68,8 @@ public class DeleteUserCommand extends EnvironmentCommand<WhisperServerConfigura
       dbi.registerContainerFactory(new OptionalContainerFactory());
 
       Accounts            accounts        = dbi.onDemand(Accounts.class);
-      ReplicatedJedisPool cacheClient     = new RedisClientFactory(configuration.getCacheConfiguration().getUrl(), configuration.getCacheConfiguration().getReplicaUrls()).getRedisClientPool();
-      ReplicatedJedisPool redisClient     = new RedisClientFactory(configuration.getDirectoryConfiguration().getUrl(), configuration.getDirectoryConfiguration().getReplicaUrls()).getRedisClientPool();
+      ReplicatedJedisPool cacheClient     = new RedisClientFactory(configuration.getCache().getUrl(), configuration.getCache().getReplicaUrls()).getRedisClientPool();
+      ReplicatedJedisPool redisClient     = new RedisClientFactory(configuration.getDirectory().getUrl(), configuration.getDirectory().getReplicaUrls()).getRedisClientPool();
       DirectoryManager    directory       = new DirectoryManager(redisClient);
       AccountsManager     accountsManager = new AccountsManager(accounts, directory, cacheClient);
 

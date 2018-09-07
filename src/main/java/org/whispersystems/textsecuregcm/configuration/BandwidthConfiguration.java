@@ -18,10 +18,12 @@ package org.whispersystems.textsecuregcm.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotEmpty;
 
-@Getter
+@Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class BandwidthConfiguration {
 

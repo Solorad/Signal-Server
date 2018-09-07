@@ -1,15 +1,5 @@
 package org.whispersystems.textsecuregcm.workers;
 
-import net.sourceforge.argparse4j.inf.Namespace;
-import org.skife.jdbi.v2.DBI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.WhisperServerConfiguration;
-import org.whispersystems.textsecuregcm.storage.Accounts;
-import org.whispersystems.textsecuregcm.storage.Keys;
-import org.whispersystems.textsecuregcm.storage.Messages;
-import org.whispersystems.textsecuregcm.storage.PendingAccounts;
-
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
@@ -17,6 +7,12 @@ import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
 import io.dropwizard.jdbi.args.OptionalArgumentFactory;
 import io.dropwizard.setup.Bootstrap;
+import net.sourceforge.argparse4j.inf.Namespace;
+import org.skife.jdbi.v2.DBI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.whispersystems.textsecuregcm.WhisperServerConfiguration;
+import org.whispersystems.textsecuregcm.storage.*;
 
 
 public class VacuumCommand extends ConfiguredCommand<WhisperServerConfiguration> {
@@ -33,8 +29,8 @@ public class VacuumCommand extends ConfiguredCommand<WhisperServerConfiguration>
                      WhisperServerConfiguration config)
       throws Exception
   {
-    DataSourceFactory dbConfig        = config.getDataSourceFactory();
-    DataSourceFactory messageDbConfig = config.getMessageStoreConfiguration();
+    DataSourceFactory dbConfig        = config.getDatabase();
+    DataSourceFactory messageDbConfig = config.getMessageStore();
     DBI               dbi             = new DBI(dbConfig.getUrl(), dbConfig.getUser(), dbConfig.getPassword()                     );
     DBI               messageDbi      = new DBI(messageDbConfig.getUrl(), messageDbConfig.getUser(), messageDbConfig.getPassword());
 

@@ -3,6 +3,15 @@ package org.whispersystems.textsecuregcm.workers;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import io.dropwizard.Application;
+import io.dropwizard.cli.EnvironmentCommand;
+import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.jdbi.ImmutableListContainerFactory;
+import io.dropwizard.jdbi.ImmutableSetContainerFactory;
+import io.dropwizard.jdbi.OptionalContainerFactory;
+import io.dropwizard.jdbi.args.OptionalArgumentFactory;
+import io.dropwizard.metrics.ReporterFactory;
+import io.dropwizard.setup.Environment;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
@@ -13,15 +22,6 @@ import org.whispersystems.textsecuregcm.storage.Accounts;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import io.dropwizard.Application;
-import io.dropwizard.cli.EnvironmentCommand;
-import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.jdbi.ImmutableListContainerFactory;
-import io.dropwizard.jdbi.ImmutableSetContainerFactory;
-import io.dropwizard.jdbi.OptionalContainerFactory;
-import io.dropwizard.jdbi.args.OptionalArgumentFactory;
-import io.dropwizard.metrics.ReporterFactory;
-import io.dropwizard.setup.Environment;
 
 public class PeriodicStatsCommand extends EnvironmentCommand<WhisperServerConfiguration> {
 
@@ -46,7 +46,7 @@ public class PeriodicStatsCommand extends EnvironmentCommand<WhisperServerConfig
     try {
       environment.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-      DataSourceFactory dbConfig = configuration.getReadDataSourceFactory();
+      DataSourceFactory dbConfig = configuration.getRead_database();
 
       if (dbConfig == null) {
         logger.warn("No slave database configuration found!");
