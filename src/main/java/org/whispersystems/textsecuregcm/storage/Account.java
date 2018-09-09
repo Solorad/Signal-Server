@@ -21,11 +21,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import lombok.Data;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+@Data
 public class Account {
 
   public static final int MEMCACHE_VERION = 5;
@@ -54,6 +56,9 @@ public class Account {
   @JsonIgnore
   private Device authenticatedDevice;
 
+  @JsonIgnore
+  private String secondPhoneNumber;
+
   public Account() {}
 
   @VisibleForTesting
@@ -70,14 +75,6 @@ public class Account {
     this.authenticatedDevice = device;
   }
 
-  public void setNumber(String number) {
-    this.number = number;
-  }
-
-  public String getNumber() {
-    return number;
-  }
-
   public void addDevice(Device device) {
     this.devices.remove(device);
     this.devices.add(device);
@@ -85,10 +82,6 @@ public class Account {
 
   public void removeDevice(long deviceId) {
     this.devices.remove(new Device(deviceId, null, null, null, null, null, null, null, false, 0, null, 0, 0, false, false, "NA"));
-  }
-
-  public Set<Device> getDevices() {
-    return devices;
   }
 
   public Optional<Device> getMasterDevice() {
@@ -182,37 +175,5 @@ public class Account {
     }
 
     return lastSeen;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getAvatar() {
-    return avatar;
-  }
-
-  public void setAvatar(String avatar) {
-    this.avatar = avatar;
-  }
-
-  public String getAvatarDigest() {
-    return avatarDigest;
-  }
-
-  public void setAvatarDigest(String avatarDigest) {
-    this.avatarDigest = avatarDigest;
-  }
-
-  public Optional<String> getPin() {
-    return Optional.fromNullable(pin);
-  }
-
-  public void setPin(String pin) {
-    this.pin = pin;
   }
 }

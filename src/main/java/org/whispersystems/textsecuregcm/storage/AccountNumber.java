@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2013 Open WhisperSystems
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,23 @@
  */
 package org.whispersystems.textsecuregcm.storage;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.whispersystems.textsecuregcm.util.SystemMapper;
 
-public abstract class AccountPhoneNumber {
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
-  private static final String ID     = "id";
-  private static final String NUMBER = "number";
-  private static final String DATA   = "data";
+import java.util.Date;
 
-  private static final ObjectMapper mapper = SystemMapper.getMapper();
+@Data
+public class AccountNumber {
 
+    public static final int MEMCACHE_VERION = 5;
 
+    @JsonProperty
+    private String number;
+
+    @JsonProperty
+    private String bandwidthNumber;
+
+    @JsonProperty
+    private Date acquireDate;
 }

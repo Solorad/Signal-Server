@@ -67,7 +67,7 @@ public class BandwidthController {
             throws RateLimitExceededException {
         logger.info("getAvailableTollFreeNumbers started");
         Map<String, Object> params = getParameterMap(account, uriInfo);
-        return bandwidthManager.orderAvailableLocalNumbers(params);
+        return bandwidthManager.orderAvailableLocalNumbers(account, params);
     }
 
     @Timed
@@ -79,7 +79,7 @@ public class BandwidthController {
             throws RateLimitExceededException {
         logger.info("getAvailableTollFreeNumbers started");
         Map<String, Object> params = getParameterMap(account, uriInfo);
-        return bandwidthManager.orderAvailableTollFreeNumbers(params);
+        return bandwidthManager.orderAvailableTollFreeNumbers(account, params);
     }
 
     private Map<String, Object> getParameterMap(@Auth Account account, @Context UriInfo uriInfo)

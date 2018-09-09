@@ -133,6 +133,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         DBI messagedb = dbiFactory.build(environment, config.getMessageStore(), "messagedb");
 
         Accounts accounts = database.onDemand(Accounts.class);
+        AccountNumbers accountNumbers = database.onDemand(AccountNumbers.class);
         PendingAccounts pendingAccounts = database.onDemand(PendingAccounts.class);
         PendingDevices pendingDevices = database.onDemand(PendingDevices.class);
         Keys keys = database.onDemand(Keys.class);
@@ -215,7 +216,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         environment.jersey().register(
                 new AccountController(pendingAccountsManager, accountsManager, rateLimiters, smsSender, messagesManager,
                                       turnTokenGenerator, config.getTestDevicesMap()));
-        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidth());
+        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidth(), accounts, accountNumbers);
         environment.jersey().register(new BandwidthController(bandwidthManager, rateLimiters));
         environment.jersey().register(
                 new DeviceController(pendingDevicesManager, accountsManager, messagesManager, rateLimiters,
