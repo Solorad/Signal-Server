@@ -216,7 +216,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         environment.jersey().register(
                 new AccountController(pendingAccountsManager, accountsManager, rateLimiters, smsSender, messagesManager,
                                       turnTokenGenerator, config.getTestDevicesMap()));
-        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidth(), accounts, accountNumbers);
+        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidth(), accountsManager, accountNumbers);
         environment.jersey().register(new BandwidthController(bandwidthManager, rateLimiters));
         environment.jersey().register(
                 new DeviceController(pendingDevicesManager, accountsManager, messagesManager, rateLimiters,

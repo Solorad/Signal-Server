@@ -23,6 +23,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -56,8 +58,17 @@ public class Account {
   @JsonIgnore
   private Device authenticatedDevice;
 
-  @JsonIgnore
+  @JsonProperty
   private String secondPhoneNumber;
+
+  @JsonProperty
+  private Date phoneBuyDate;
+
+  @JsonProperty
+  private BigDecimal phonePrice;
+
+  @JsonProperty
+  private BigDecimal balance;
 
   public Account() {}
 
@@ -175,5 +186,9 @@ public class Account {
     }
 
     return lastSeen;
+  }
+
+  public Optional<String> getPin() {
+    return Optional.fromNullable(pin);
   }
 }

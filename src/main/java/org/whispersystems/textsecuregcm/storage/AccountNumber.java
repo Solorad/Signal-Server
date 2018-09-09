@@ -20,18 +20,20 @@ package org.whispersystems.textsecuregcm.storage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
 public class AccountNumber {
-
-    public static final int MEMCACHE_VERION = 5;
 
     @JsonProperty
     private String number;
 
     @JsonProperty
     private String bandwidthNumber;
+
+    @JsonProperty
+    private BigDecimal currentBalance;
 
     @JsonProperty
     private Date acquireDate;

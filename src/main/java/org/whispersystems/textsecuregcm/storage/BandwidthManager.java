@@ -13,9 +13,8 @@ import org.whispersystems.textsecuregcm.storage.data.PhoneNumber;
 import org.whispersystems.textsecuregcm.storage.data.PhoneNumbersResponse;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.*;
 
 public class BandwidthManager {
     public static final String QUANTITY = "quantity";
@@ -25,14 +24,15 @@ public class BandwidthManager {
 
     private final BandwidthClient bandwidthClient;
     private final AccountNumbers accountNumbers;
-    private final Accounts accounts;
+    private final AccountsManager accountsManager;
 
     public BandwidthManager(BandwidthConfiguration bandwidth,
-                            Accounts accounts, AccountNumbers accountNumbers) {
+                            AccountsManager accountsManager,
+                            AccountNumbers accountNumbers) {
         this.bandwidthClient = BandwidthClient.getInstance();
         this.bandwidthClient.setCredentials(bandwidth.getUserID(), bandwidth.getApiToken(),
                                                      bandwidth.getApiSecret());
-        this.accounts = accounts;
+        this.accountsManager = accountsManager;
         this.accountNumbers = accountNumbers;
     }
 
@@ -104,7 +104,7 @@ public class BandwidthManager {
             RestResponse restResponse = bandwidthClient.post(sb.toString(), new HashMap<>());
             PhoneNumbersResponse phoneNumbersResponse = parsePhoneNumberResponse(restResponse);
             if (phoneNumbersResponse.getErrorMessage() == null && phoneNumbersResponse.getPhoneNumbers().size() > 0) {
-                updateAccountAndAddInHistory(account, phoneNumbersResponse);
+                return updateAccountAndAddInHistory(account, phoneNumbersResponse);
             }
             return phoneNumbersResponse;
         } catch (Exception  e) {
@@ -113,10 +113,20 @@ public class BandwidthManager {
         }
     }
 
-    private void updateAccountAndAddInHistory(Account account, PhoneNumbersResponse phoneNumbersResponse) {
+    private PhoneNumbersResponse updateAccountAndAddInHistory(Account account, PhoneNumbersResponse phoneNumbersResponse) {
         PhoneNumber phoneNumber = phoneNumbersResponse.getPhoneNumbers().get(0);
+        String price = phoneNumber.getPrice();
+        BigDecimal phonePrice = new BigDecimal(price);
+        if (account.getBalance() == null || account.getBalance().compareTo(phonePrice) > 0) {
+            return new PhoneNumbersResponse("Balance is less than needed to buy new number.");
+        }
         account.setSecondPhoneNumber(phoneNumber.getNumber());
-        accounts.update(account);
+        account.setPhoneBuyDate(new Date());
+        account.setBalance(account.getBalance().min(phonePrice));
+        account.setPhonePrice(phonePrice);
+        accountsManager.update(account);
         accountNumbers.insertStep(account.getNumber(), phoneNumber.getNumber());
+
+        return phoneNumbersResponse;
     }
 }
