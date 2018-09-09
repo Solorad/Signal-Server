@@ -67,3 +67,8 @@ apn: # Apple Push Notifications configuration
 gcm: # GCM Configuration
   senderId:
   apiKey:
+
+bandwidth:
+  userID: secondNumber
+  apiToken: t-4ixwrogniib4yxpfrlkqkqa
+  apiSecret: jtsrc4piteava3fgjdvnd7nffvp3whgngyok4ky
