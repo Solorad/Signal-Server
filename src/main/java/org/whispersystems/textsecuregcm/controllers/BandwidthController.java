@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
@@ -39,11 +40,18 @@ public class BandwidthController {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/availableNumbers/local")
     @ApiOperation(value = "Get Bandwidth available local numbers", notes = "Get Bandwidth available local numbers. For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/getAvailableNumbersLocal.html")
-    public PhoneNumbersResponse getAvailableLocalNumbers(@Auth Account account, @Context UriInfo uriInfo)
+    public Response getAvailableLocalNumbers(@Auth Account account, @Context UriInfo uriInfo)
             throws IOException, RateLimitExceededException {
         logger.info("getAvailableLocalNumbers started");
         Map<String, Object> params = getParameterMap(account, uriInfo);
-        return bandwidthManager.getAvailableLocalNumbers(params);
+        PhoneNumbersResponse availableLocalNumbers = bandwidthManager.getAvailableLocalNumbers(params);
+        if (StringUtils.isNotEmpty(availableLocalNumbers.getErrorMessage())) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(availableLocalNumbers.getErrorMessage())
+                    .build();
+        }
+        return Response.accepted(availableLocalNumbers.getPhoneNumbers()).build();
     }
 
     @Timed
@@ -51,35 +59,30 @@ public class BandwidthController {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/availableNumbers/tollFree")
     @ApiOperation(value = "Get Bandwidth available toll free numbers", notes = "Get Bandwidth available local numbers. For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/getAvailableNumbersTollFree.html")
-    public PhoneNumbersResponse getAvailableTollFreeNumbers(@Auth Account account, @Context UriInfo uriInfo)
+    public Response getAvailableTollFreeNumbers(@Auth Account account, @Context UriInfo uriInfo)
             throws RateLimitExceededException {
         logger.info("getAvailableTollFreeNumbers started");
         Map<String, Object> params = getParameterMap(account, uriInfo);
-        return bandwidthManager.getAvailableTollFreeNumbers(params);
+        PhoneNumbersResponse phoneNumbersResponse = bandwidthManager.getAvailableTollFreeNumbers(params);
+        if (StringUtils.isNotEmpty(phoneNumbersResponse.getErrorMessage())) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(phoneNumbersResponse.getErrorMessage())
+                    .build();
+        }
+        return Response.accepted(phoneNumbersResponse.getPhoneNumbers()).build();
     }
 
     @Timed
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/availableNumbers/local")
-    @ApiOperation(value = "Order available local number", notes = "For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/postAvailableNumbersLocal.html")
+    @ApiOperation(value = "Order available local number", notes = "Query param 'localNumber' is required. For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/postAvailableNumbersLocal.html")
     public PhoneNumbersResponse orderLocalNumber(@Auth Account account, @Context UriInfo uriInfo)
             throws RateLimitExceededException {
         logger.info("getAvailableTollFreeNumbers started");
         Map<String, Object> params = getParameterMap(account, uriInfo);
         return bandwidthManager.orderAvailableLocalNumbers(account, params);
-    }
-
-    @Timed
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/availableNumbers/tollFree")
-    @ApiOperation(value = "Order available toll free number", notes = "For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/postAvailableNumbersTollFree.html")
-    public PhoneNumbersResponse orderTollFreeNumber(@Auth Account account, @Context UriInfo uriInfo)
-            throws RateLimitExceededException {
-        logger.info("getAvailableTollFreeNumbers started");
-        Map<String, Object> params = getParameterMap(account, uriInfo);
-        return bandwidthManager.orderAvailableTollFreeNumbers(account, params);
     }
 
     private Map<String, Object> getParameterMap(@Auth Account account, @Context UriInfo uriInfo)

@@ -5,6 +5,7 @@ import com.bandwidth.sdk.BandwidthClient;
 import com.bandwidth.sdk.RestResponse;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import liquibase.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.configuration.BandwidthConfiguration;
@@ -17,9 +18,9 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class BandwidthManager {
-    public static final String QUANTITY = "quantity";
     public static final String LOCAL_ADDRESS = "availableNumbers/local";
     public static final String TOLL_FREE_ADDRESS = "availableNumbers/tollFree";
+    public static final String LOCAL_NUMBER = "localNumber";
     private final Logger logger = LoggerFactory.getLogger(BandwidthManager.class);
 
     private final BandwidthClient bandwidthClient;
@@ -77,31 +78,19 @@ public class BandwidthManager {
 
     public PhoneNumbersResponse orderAvailableLocalNumbers(Account account,
                                                            Map<String, Object> parameters) {
-        return orderNumberForAccount(account, LOCAL_ADDRESS, parameters);
+        Object phoneNumberParam = parameters.get(LOCAL_NUMBER);
+        if (!(phoneNumberParam instanceof String) || StringUtils.isEmpty((String) phoneNumberParam)) {
+            return new PhoneNumbersResponse("Parameter 'localNumber' is not present in request parameters");
+
+        }
+        return orderNumberForAccount(account, LOCAL_ADDRESS, (String)phoneNumberParam);
     }
 
-    /**
-     * Order available toll free numbers
-     *
-     * @param account
-     * @param parameters
-     * @return
-     */
-    public PhoneNumbersResponse orderAvailableTollFreeNumbers(Account account,
-                                                              Map<String, Object> parameters) {
-        return orderNumberForAccount(account, TOLL_FREE_ADDRESS, parameters);
-    }
 
     private PhoneNumbersResponse orderNumberForAccount(Account account, String address,
-                                                       Map<String, Object> parameters) {
+                                                       String localNumber) {
         try {
-            parameters.put(QUANTITY, 1);
-            final StringBuilder sb = new StringBuilder(address);
-            sb.append("?");
-            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-                sb.append(entry.getKey()).append("=").append(entry.getValue().toString()).append("&");
-            }
-            RestResponse restResponse = bandwidthClient.post(sb.toString(), new HashMap<>());
+            RestResponse restResponse = bandwidthClient.post(address + "?quantity=1&localNumber=" + localNumber, new HashMap<>());
             PhoneNumbersResponse phoneNumbersResponse = parsePhoneNumberResponse(restResponse);
             if (phoneNumbersResponse.getErrorMessage() == null && phoneNumbersResponse.getPhoneNumbers().size() > 0) {
                 return updateAccountAndAddInHistory(account, phoneNumbersResponse);
