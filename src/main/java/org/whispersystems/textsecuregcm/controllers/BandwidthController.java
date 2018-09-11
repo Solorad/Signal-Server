@@ -10,8 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.storage.Account;
 import org.whispersystems.textsecuregcm.storage.BandwidthManager;
-import org.whispersystems.textsecuregcm.storage.data.PhoneNumbersResponse;
+import org.whispersystems.textsecuregcm.storage.bandwidth.PhoneNumberRequest;
+import org.whispersystems.textsecuregcm.storage.bandwidth.PhoneNumbersResponse;
 
+import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
@@ -76,13 +78,19 @@ public class BandwidthController {
     @Timed
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/availableNumbers/local")
+    @Path("/phoneNumbers")
     @ApiOperation(value = "Order available local number", notes = "Query param 'localNumber' is required. For more info - https://dev.bandwidth.com/ap-docs/methods/availableNumbers/postAvailableNumbersLocal.html")
-    public PhoneNumbersResponse orderLocalNumber(@Auth Account account, @Context UriInfo uriInfo)
+    public Response orderLocalNumber(@Auth Account account, @Valid PhoneNumberRequest phoneNumberRequest)
             throws RateLimitExceededException {
         logger.info("getAvailableTollFreeNumbers started");
-        Map<String, Object> params = getParameterMap(account, uriInfo);
-        return bandwidthManager.orderAvailableLocalNumbers(account, params);
+        PhoneNumbersResponse phoneNumbersResponse = bandwidthManager.orderPhoneNumber(account, phoneNumberRequest);
+        if (StringUtils.isNotEmpty(phoneNumbersResponse.getErrorMessage())) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(phoneNumbersResponse.getErrorMessage())
+                    .build();
+        }
+        return Response.accepted(phoneNumbersResponse.getPhoneNumbers()).build();
     }
 
     private Map<String, Object> getParameterMap(@Auth Account account, @Context UriInfo uriInfo)

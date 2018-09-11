@@ -1,4 +1,4 @@
-package org.whispersystems.textsecuregcm.storage.data;
+package org.whispersystems.textsecuregcm.storage.bandwidth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
