@@ -8,7 +8,6 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.configuration.BandwidthConfiguration;
 import org.whispersystems.textsecuregcm.redis.ReplicatedJedisPool;
 import org.whispersystems.textsecuregcm.storage.bandwidth.*;
 import redis.clients.jedis.Jedis;
@@ -29,14 +28,12 @@ public class BandwidthManager {
     private final AccountsManager accountsManager;
     private final ReplicatedJedisPool cacheClient;
 
-    public BandwidthManager(BandwidthConfiguration bandwidth,
+    public BandwidthManager(BandwidthClient bandwidthClient,
                             AccountsManager accountsManager,
                             AccountNumbers accountNumbers,
                             ReplicatedJedisPool cacheClient) {
+        this.bandwidthClient = bandwidthClient;
         this.cacheClient = cacheClient;
-        this.bandwidthClient = BandwidthClient.getInstance();
-        this.bandwidthClient.setCredentials(bandwidth.getUserID(), bandwidth.getApiToken(),
-                                                     bandwidth.getApiSecret());
         this.accountsManager = accountsManager;
         this.accountNumbers = accountNumbers;
     }
@@ -88,13 +85,13 @@ public class BandwidthManager {
     public PhoneNumbersResponse orderPhoneNumber(Account account,
                                                  PhoneNumberRequest phoneNumberRequest) {
         try {
-            String request = new Gson().toJson(phoneNumberRequest);
             // 1. validate account balance is enough to buy phone
             String error = validateUserBalanceForBuy(account, phoneNumberRequest);
             if (StringUtils.isNotEmpty(error)) {
                 return new PhoneNumbersResponse(error);
             }
             // 2. buy phone
+            String request = new Gson().toJson(phoneNumberRequest);
             RestResponse restResponse = bandwidthClient.postJson("phoneNumbers ", request);
             PhoneNumbersResponse phoneNumbersResponse = parsePhoneNumberResponse(restResponse);
             // 3. Analyze buy results and add results into user's history.
@@ -117,15 +114,16 @@ public class BandwidthManager {
     private String validateUserBalanceForBuy(Account account, PhoneNumberRequest phoneNumberRequest) {
         String phonePrice = getFromCache(phoneNumberRequest.getNumber());
         if (phonePrice == null) {
-            PhoneNumberInfo phoneNumberInfo = getPhoneInfo(phoneNumberRequest.getNumber());
-            if (phoneNumberInfo == null) {
+            PhoneNumbersResponse phoneNumberResponse = getPhoneInfo(phoneNumberRequest.getNumber());
+            if (phoneNumberResponse == null) {
                 logger.error("No info about this number in bandwidth");
                 return "No info about this number in bandwidth";
             }
-            if (!phoneNumberInfo.getNumberState().equals("enabled")) {
-                logger.error("Phone is already in number state '{}'", phoneNumberInfo.getNumberState());
-                return "Phone is already in number state '" + phoneNumberInfo.getNumberState() + "'.";
+            if (phoneNumberResponse.getPhoneNumbers().size() < 1) {
+                logger.error("Can't find phone");
+                return "Can't find phone";
             }
+            phonePrice = phoneNumberResponse.getPhoneNumbers().get(0).getPrice();
         }
         if (phonePrice == null) {
             logger.error("Phone price for number '{}' is still unknown.", phoneNumberRequest.getNumber());
@@ -139,14 +137,16 @@ public class BandwidthManager {
         return isEnoughMoney ? null : "Not enough money to buy this phone.";
     }
 
-    private PhoneNumberInfo getPhoneInfo(String number) {
+    private PhoneNumbersResponse getPhoneInfo(String number) {
         try {
+            Map<String, Object> params = new HashMap<>();
             String encodedNumber = number.replaceAll("\\+", "%20");
-            RestResponse restResponse = bandwidthClient.get("phoneNumbers/" + encodedNumber, new HashMap<>());
-            if (restResponse.getStatus() < 400) {
-                return new Gson().fromJson(restResponse.getResponseText(), PhoneNumberInfo.class);
+            params.put("pattern", encodedNumber);
+            PhoneNumbersResponse theNumber = getAvailableTollFreeNumbers(params);
+            if (StringUtils.isEmpty(theNumber.getErrorMessage())) {
+                return theNumber;
             } else {
-              logger.error("Status is invalid: {}", restResponse.getStatus());
+                logger.error("Error in response from bandwidth: {}", theNumber.getErrorMessage());
               return null;
             }
         } catch (Exception e) {

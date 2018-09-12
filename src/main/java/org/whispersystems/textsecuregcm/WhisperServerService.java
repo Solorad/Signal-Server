@@ -16,6 +16,7 @@
  */
 package org.whispersystems.textsecuregcm;
 
+import com.bandwidth.sdk.BandwidthClient;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -38,6 +39,7 @@ import org.whispersystems.dropwizard.simpleauth.BasicCredentialAuthFilter;
 import org.whispersystems.textsecuregcm.auth.AccountAuthenticator;
 import org.whispersystems.textsecuregcm.auth.FederatedPeerAuthenticator;
 import org.whispersystems.textsecuregcm.auth.TurnTokenGenerator;
+import org.whispersystems.textsecuregcm.configuration.BandwidthConfiguration;
 import org.whispersystems.textsecuregcm.controllers.*;
 import org.whispersystems.textsecuregcm.federation.FederatedClientManager;
 import org.whispersystems.textsecuregcm.federation.FederatedPeer;
@@ -216,7 +218,11 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
         environment.jersey().register(
                 new AccountController(pendingAccountsManager, accountsManager, rateLimiters, smsSender, messagesManager,
                                       turnTokenGenerator, config.getTestDevicesMap()));
-        BandwidthManager bandwidthManager = new BandwidthManager(config.getBandwidth(), accountsManager, accountNumbers,
+        BandwidthClient bandwidthClient = BandwidthClient.getInstance();
+        BandwidthConfiguration bandwidth = config.getBandwidth();
+        bandwidthClient.setCredentials(bandwidth.getUserID(), bandwidth.getApiToken(),
+                                            bandwidth.getApiSecret());
+        BandwidthManager bandwidthManager = new BandwidthManager(bandwidthClient, accountsManager, accountNumbers,
                                                                  cacheClient);
         environment.jersey().register(new BandwidthController(bandwidthManager, rateLimiters));
         environment.jersey().register(
