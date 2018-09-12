@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.storage.Account;
 import org.whispersystems.textsecuregcm.storage.BandwidthManager;
+import org.whispersystems.textsecuregcm.storage.bandwidth.ErrorResponse;
 import org.whispersystems.textsecuregcm.storage.bandwidth.PhoneNumberRequest;
 import org.whispersystems.textsecuregcm.storage.bandwidth.PhoneNumbersResponse;
 
@@ -50,7 +51,7 @@ public class BandwidthController {
         if (StringUtils.isNotEmpty(availableLocalNumbers.getErrorMessage())) {
             return Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity(availableLocalNumbers.getErrorMessage())
+                    .entity(new ErrorResponse(availableLocalNumbers.getErrorMessage()))
                     .build();
         }
         return Response.accepted(availableLocalNumbers.getPhoneNumbers()).build();
@@ -69,7 +70,7 @@ public class BandwidthController {
         if (StringUtils.isNotEmpty(phoneNumbersResponse.getErrorMessage())) {
             return Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity(phoneNumbersResponse.getErrorMessage())
+                    .entity(new ErrorResponse(phoneNumbersResponse.getErrorMessage()))
                     .build();
         }
         return Response.accepted(phoneNumbersResponse.getPhoneNumbers()).build();
@@ -87,7 +88,7 @@ public class BandwidthController {
         if (StringUtils.isNotEmpty(phoneNumbersResponse.getErrorMessage())) {
             return Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity(phoneNumbersResponse.getErrorMessage())
+                    .entity(new ErrorResponse(phoneNumbersResponse.getErrorMessage()))
                     .build();
         }
         return Response.accepted(phoneNumbersResponse.getPhoneNumbers()).build();

@@ -180,7 +180,7 @@ public class BandwidthManager {
     private void setInCache(String number, String price) {
         try (Jedis jedis = cacheClient.getWriteResource()) {
             // store prices for 1 hour after search
-            jedis.set(getKey(number), price, null, "ex", 3600);
+            jedis.set(getKey(number), price, "NX", "EX", 3600);
         }
     }
 
